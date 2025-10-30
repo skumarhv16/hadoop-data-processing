@@ -1,0 +1,47 @@
+<workflow-app xmlns="uri:oozie:workflow:0.5" name="daily-processing-wf">
+    <start to="data-validation"/>
+    
+    <!-- Data Validation Step -->
+    <action name="data-validation">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+            </configuration>
+            <exec>validate_data.sh</exec>
+            <argument>${inputPath}</argument>
+            <file>${workflowPath}/scripts/validate_data.sh#validate_data.sh</file>
+            <capture-output/>
+        </shell>
+        <ok to="mapreduce-processing"/>
+        <error to="send-error-email"/>
+    </action>
+    
+    <!-- MapReduce Processing Step -->
+    <action name="mapreduce-processing">
+        <map-reduce>
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.mapper.new-api</name>
+                    <value>true</value>
+                </property>
+                <property>
+                    <name>mapred.reducer.new-api</name>
+                    <value>true</value>
+                </property>
+                <property>
+                    <name>mapreduce.job.map.class</name>
+                    <value>com.yahoo.processing.LogMapper</value>
+                </property>
+                <property>
+                    <name>mapreduce.job.reduce.class</name>
+                    <value>com.yahoo.processing.LogReducer</value>
+                </property>
+                <property>
+                    <name>mapreduce.job.output.key.class</name
